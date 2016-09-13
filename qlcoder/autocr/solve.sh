@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 question=http://www.qlcoder.com/train/autocr
 cookie=`cat cookiefile`
-level=`curl -b "$cookie"  "$question" | grep -Po 'level=([0-9]+)&x=([1-9]+)&y=([0-9]+)&map=([0-1]+)'`
+page=`curl -b "$cookie"  "$question"`
+level=`echo $page | grep -Po 'level=([0-9]+)&x=([0-9]+)&y=([0-9]+)&map=([0-1]+)'`
 echo $level
 condition=`echo "$level" | awk -F '=|&' '{print($4 " " $6 " " $8)}'`
 answer=`./autocr.rb $condition`
