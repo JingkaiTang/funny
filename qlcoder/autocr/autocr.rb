@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 START = 's'
 EMPTY = '0'
 BLOCK = '1'
@@ -104,7 +105,7 @@ class AutoCR
     def forward
         x, y = cov1to2(@cursor)
         u = x > 0    ? (@data[cov2to1(x-1, y)] == EMPTY) : false
-        r = x < @c-1 ? (@data[cov2to1(x, y+1)] == EMPTY) : false
+        r = y < @c-1 ? (@data[cov2to1(x, y+1)] == EMPTY) : false
         d = x < @l-1 ? (@data[cov2to1(x+1, y)] == EMPTY) : false
         l = y > 0    ? (@data[cov2to1(x, y-1)] == EMPTY) : false
         return [u, r, d, l]
@@ -132,24 +133,15 @@ def solve(data, l, c)
     left = -> cr {cr.left}
     action = [up, right, down, left]
     while start < data.length
-        puts start
         crs = [AutoCR.new(data.clone, l, c, start)]
         until crs.empty?
             cr = crs.pop
-            cr.show
             fwd = cr.forward
-            first = true
             for i in 0...4
                 if fwd[i]
-                    if first
-                        ccr = cr
-                        first = false
-                    else
-                        ccr = cr.clone
-                    end
+                    ccr = cr.clone
                     action[i].call(ccr)
                     if ccr.is_covered?
-                        ccr.show
                         return ccr.result
                     else
                         crs.push(ccr)
@@ -164,6 +156,7 @@ def solve(data, l, c)
     end
 end
 
-ret = solve('000000000010000000010001000010000011010010011010000000000000000', 7, 9)
+x, y, map = ARGV
+ret = solve(map.dup, x.to_i, y.to_i)
 puts ret
 
