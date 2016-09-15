@@ -8,10 +8,10 @@ UP = '^'
 DOWN = 'v'
 LEFT = '<'
 RIGHT = '>'
-DYE = 'd'
+DYE = '#'
 
 class AutoCR
-    attr_accessor :data, :l, :c, :start, :cursor, :path
+    attr_accessor :data, :l, :c, :start, :cursor, :path, :empty, :dye
 
     def initialize(data='', l=0, c=0, start=0)
         @data = data
@@ -21,6 +21,8 @@ class AutoCR
         @cursor = @start
         @path = ''
         @data[@start] = START
+        @empty = EMPTY
+        @dye = DYE
     end
 
     def clone
@@ -31,6 +33,8 @@ class AutoCR
         cr.start = @start
         cr.cursor = @cursor
         cr.path = @path.clone
+        cr.empty = @empty
+        cr.dye = @dye
         return cr
     end
 
@@ -40,7 +44,7 @@ class AutoCR
         while x > 0
             x -= 1
             cursor = cov2to1(x, y)
-            if @data[cursor] == EMPTY
+            if @data[cursor] == @empty
                 @data[cursor] = UP
                 @cursor = cursor
             else
@@ -55,7 +59,7 @@ class AutoCR
         while x < @l-1
             x += 1
             cursor = cov2to1(x, y)
-            if @data[cursor] == EMPTY
+            if @data[cursor] == @empty
                 @data[cursor] = DOWN
                 @cursor = cursor
             else
@@ -70,7 +74,7 @@ class AutoCR
         while y > 0
             y -= 1
             cursor = cov2to1(x, y)
-            if @data[cursor] == EMPTY
+            if @data[cursor] == @empty
                 @data[cursor] = LEFT
                 @cursor = cursor
             else
@@ -85,7 +89,7 @@ class AutoCR
         while y < @c-1
             y += 1
             cursor = cov2to1(x, y)
-            if @data[cursor] == EMPTY
+            if @data[cursor] == @empty
                 @data[cursor] = RIGHT
                 @cursor = cursor
             else
@@ -103,22 +107,22 @@ class AutoCR
     end
 
     def is_covered?
-        !@data.index(EMPTY)
+        !@data.index(@empty)
     end
 
     def forward
         x, y = cov1to2(@cursor)
-        u = x > 0    ? (@data[cov2to1(x-1, y)] == EMPTY) : false
-        r = y < @c-1 ? (@data[cov2to1(x, y+1)] == EMPTY) : false
-        d = x < @l-1 ? (@data[cov2to1(x+1, y)] == EMPTY) : false
-        l = y > 0    ? (@data[cov2to1(x, y-1)] == EMPTY) : false
+        u = x > 0    ? (@data[cov2to1(x-1, y)] == @empty) : false
+        r = y < @c-1 ? (@data[cov2to1(x, y+1)] == @empty) : false
+        d = x < @l-1 ? (@data[cov2to1(x+1, y)] == @empty) : false
+        l = y > 0    ? (@data[cov2to1(x, y-1)] == @empty) : false
         return [u, r, d, l]
     end
 
     def show
         for i in 0...@l
             puts('- '*(@c*2+1))
-            puts('| ' + (@data.slice(i*@c, @c).split('').map{|x| x == '0' ? "\e[35m#{x}\e]" : "\e[33m#{x}\e]"}).join(' | ') + ' |')
+            puts('| ' + (@data.slice(i*@c, @c).split('')).join(' | ') + ' |')
         end
         puts('- '*(@c*2+1))
     end
@@ -129,21 +133,21 @@ class AutoCR
     end
 
     def solvable?
-        cr = clone
-        s = @data.index(EMPTY)
+        s = @data.index(@empty)
         return true unless s
-        self.class.dye(cr, s)
-        return cr.is_covered?
+        go_dye(s)
+        @empty, @dye = @dye, @empty
+        return !@data.index(@dye)
     end
 
-    def self.dye(cr, i)
-        return if cr.data[i] != EMPTY
-        cr.data[i] = DYE
-        x, y = cr.cov1to2(i)
-        dye(cr, cr.cov2to1(x-1, y)) if x > 0
-        dye(cr, cr.cov2to1(x+1, y)) if x < cr.l-1
-        dye(cr, cr.cov2to1(x, y-1)) if y > 0
-        dye(cr, cr.cov2to1(x, y+1)) if y < cr.c-1
+    def go_dye(i)
+        return if @data[i] != @empty
+        @data[i] = @dye
+        x, y = cov1to2(i)
+        go_dye(cov2to1(x-1, y)) if x > 0
+        go_dye(cov2to1(x+1, y)) if x < @l-1
+        go_dye(cov2to1(x, y-1)) if y > 0
+        go_dye(cov2to1(x, y+1)) if y < @c-1
     end
 end
 
@@ -155,7 +159,7 @@ def solve(data, l, c)
     down = -> cr {cr.down}
     left = -> cr {cr.left}
     actions = [up, right, down, left]
-    Parallel.map(starts, in_processes: 4) do |start|
+    Parallel.map(starts, in_processes: 2) do |start|
         crs = [AutoCR.new(data.clone, l, c, start)]
         until crs.empty?
             cr = crs.pop
