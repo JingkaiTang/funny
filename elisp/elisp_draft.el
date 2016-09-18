@@ -1,0 +1,40 @@
+(+ 2 2)
+(+ 3 (+ 1 2))
+(setq my-name "Jingkai")
+(insert "Hello!")
+(insert "Hello" " world!")
+(insert "Hello, I am " my-name)
+(defun hello () (insert "Hello, I am " my-name))
+(hello)
+(defun hello (name) (insert "Hello " name))
+(hello "you")
+(switch-to-buffer-other-window "*test*")
+(progn
+  (switch-to-buffer-other-window "*test*")
+  (hello "you"))
+(progn
+  (switch-to-buffer-other-window "*test*")
+  (erase-buffer)
+  (hello "there"))
+(progn
+  (switch-to-buffer-other-window "*test*")
+  (erase-buffer)
+  (hello "you")
+  (other-window 1))
+(let ((local-name "you"))
+  (switch-to-buffer-other-window "*test*")
+  (erase-buffer)
+  (hello local-name)
+  (other-window 1))
+(format "Hello %s!\n" "visitor")
+(defun hello (name)
+  (insert (format "Hello %s!\n" name)))
+(hello "you")
+(defun greeting (name)
+  (let ((your-name "Jingkai"))
+    (insert (format "Hello %s!\n\nI am %s."
+		    name
+		    your-name
+		    ))))
+(greeting "you")
+
