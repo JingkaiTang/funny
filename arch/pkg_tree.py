@@ -7,7 +7,7 @@ KW_DEPENDS_ON = 'Depends On'
 
 
 def get_pkg_info(pkg):
-    return os.popen('pacman -Si %s' % pkg)
+    return os.popen('pacman -Si %s 2> /dev/null' % pkg)
 
 
 def get_dep_pkgs(pkg):
@@ -29,14 +29,19 @@ def get_dep_tree(pkg):
     while i != len(dep_pkgs):
         pkg = dep_pkgs[i]
         dps = get_dep_pkgs(pkg)
-        if dps:
-            for p in dps:
-                if p not in dep_pkgs and p not in err_pkgs:
-                    dep_pkgs.append(p)
-            i += 1
-        else:
+        if dps is None:
             err_pkgs.append(pkg)
             dep_pkgs.remove(pkg)
+            continue
+        for p in dps:
+            if p == 'None':
+                continue
+            t = p.find('>=')
+            if t >= 0:
+                p = p[:t]
+            if p not in dep_pkgs and p not in err_pkgs:
+                dep_pkgs.append(p)
+        i += 1
     return dep_pkgs[1:], err_pkgs
 
 if __name__ == '__main__':
