@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 import json
-import random
+from random import choice
 
 if __name__ == '__main__':
     data = json.load(open('names.json'))
-    ng = lambda: random.choice(data['lname']) + random.choice(data['fname']) + (random.choice(data['fname']) if random.choice([True, False]) else '')
-    print('\n'.join([ng() for i in range(10)]))
+    last_name = lambda: choice(data['lname'])
+    first_name = lambda: ''.\
+                 join([choice(data['fname']) for i in range(choice([1, 2, 2]))])
+    names = [last_name() + first_name() for i in range(10)]
+    print('\n'.join(names))
 
